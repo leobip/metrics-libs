@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	metricslibs "github.com/leobip/metrics-libs/lib" // Reemplaza con la ruta correcta a tu paquete de métricas
+	metricslibs "github.com/leobip/metrics-libs/libs" // Reemplaza con la ruta correcta a tu paquete de métricas
 )
 
 func main() {

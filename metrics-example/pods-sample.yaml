@@ -1,0 +1,58 @@
+# pods-sample.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-sample-1
+  namespace: metrics-ex
+  labels:
+    app: nginx
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-sample
+  namespace: metrics-ex
+  labels:
+    app: busybox
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command: ["sh", "-c", "while true; do echo Hello && sleep 5; done"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+  namespace: metrics-ex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-deploy
+  template:
+    metadata:
+      labels:
+        app: nginx-deploy
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stress-cpu
+  namespace: metrics-ex
+  labels:
+    app: stress-cpu
+spec:
+  containers:
+    - name: stress
+      image: polinux/stress
+      command: ["sh", "-c", "while true; do stress --cpu 1 --timeout 30; sleep 15; done"]
+
