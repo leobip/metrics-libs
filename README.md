@@ -216,4 +216,4 @@ reconcile_errors{cluster="minikube",namespace="metrics-ex"} 1
 ```
 
 - Or in the browser:
-  - Open: http://localhost:2112/metrics
+  - Open: <http://localhost:2112/metrics>

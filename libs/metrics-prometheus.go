@@ -35,6 +35,27 @@ var (
 		},
 		[]string{"namespace", "cluster"},
 	)
+	health = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "health",
+			Help: "Health status of the operator (1 = healthy, 0 = not healthy)",
+		},
+		[]string{"namespace", "cluster"},
+	)
+	memoryUsageBytes = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "memory_usage_bytes",
+			Help: "Memory usage in bytes of the operator",
+		},
+		[]string{"namespace", "cluster"},
+	)
+	cpuUsageCores = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "cpu_usage_cores",
+			Help: "CPU usage in cores of the operator",
+		},
+		[]string{"namespace", "cluster"},
+	)
 )
 
 // StartPrometheusMetrics initializes and starts the Prometheus metrics server on /metrics
@@ -44,10 +65,19 @@ func StartPrometheusMetrics() error {
 		// Register metrics
 		prometheus.MustRegister(reconcileCount)
 		prometheus.MustRegister(reconcileErrors)
+		prometheus.MustRegister(health)
+		prometheus.MustRegister(memoryUsageBytes)
+		prometheus.MustRegister(cpuUsageCores)
 
-		// Valores de ejemplo iniciales
-		reconcileCount.WithLabelValues(namespace, cluster).Add(3)
-		reconcileErrors.WithLabelValues(namespace, cluster).Add(1)
+		// Initialize health to 1 (healthy)
+		health.WithLabelValues(namespace, cluster).Set(1)
+
+		// Collect initial pod metrics
+		mem := getMemoryUsageBytes()
+		memoryUsageBytes.WithLabelValues(namespace, cluster).Set(mem)
+
+		cpu := getCPUUsageCores()
+		cpuUsageCores.WithLabelValues(namespace, cluster).Set(cpu)
 
 		// Get the port by environment variable or default to 2112
 		port := os.Getenv("METRICS_PORT")
