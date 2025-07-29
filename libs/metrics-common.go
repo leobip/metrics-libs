@@ -15,6 +15,28 @@ var (
 	})
 )
 
+type Metric struct {
+	Name  string
+	Value any
+	Type  string // "gauge", "counter", etc.
+	/*
+		 	Labels map[string]string
+			Error  error
+	*/
+}
+
+func getMetrics() []Metric {
+	return []Metric{
+		{"memory_usage_bytes", getMemoryUsageBytes(), "gauge"},
+		{"cpu_usage_cores", getCPUUsageCores(), "gauge"},
+		/* 		{"health", getHealthStatus(), "gauge"},
+		   		{"reconcile_count", getReconcileCount(), "counter"},
+		   		{"reconcile_errors", getReconcileErrors(), "counter"},
+		   		{"last_successful_reconcile_time", getLastSuccessfulReconcileTime(), "gauge"}, */
+		// ...
+	}
+}
+
 func SetOperatorHealthy(healthy bool) {
 	if healthy {
 		OperatorHealth.Set(1)
