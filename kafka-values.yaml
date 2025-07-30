@@ -1,0 +1,59 @@
+
+# Broker configuration
+replicaCount: 3
+
+# Persistence configuration
+persistence:
+  enabled: true
+  existingClaim: kafka-pv
+
+# Authentication disabled (using PLAINTEXT)
+auth:
+  clientProtocol: plaintext
+  interBrokerProtocol: plaintext
+
+# External access configuration
+externalAccess:
+  enabled: true
+  controller:
+    service:
+      type: NodePort
+      nodePorts: [30092, 30093, 30094]
+      externalIPs:
+        - 192.168.49.2 # Minikube IP para réplica 1
+        - 192.168.49.2 # Minikube IP para réplica 2
+        - 192.168.49.2 # Minikube IP para réplica 3
+  autoDiscovery:
+    enabled: false
+
+# Listeners configuration
+listeners:
+  client:
+    protocol: PLAINTEXT
+    name: CLIENT
+  controller:
+    protocol: PLAINTEXT
+    name: CONTROLLER
+  external:
+    protocol: PLAINTEXT
+    name: EXTERNAL
+
+# Additional broker configuration
+extraConfig: |
+  advertised.listeners=PLAINTEXT://kafka.monitoring.svc.cluster.local:9092,EXTERNAL://${EXTERNAL_ACCESS_HOST}:${EXTERNAL_ACCESS_PORT}
+  listener.security.protocol.map=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+
+# Resources configuration
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 200m
+  limits:
+    memory: 1Gi
+    cpu: 500m
+
+# Metrics
+metrics:
+  kafka:
+    enabled: true
+

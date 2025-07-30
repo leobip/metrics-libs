@@ -1,0 +1,8 @@
+Forwarding from 127.0.0.1:29092 -> 9095
+Forwarding from [::1]:29092 -> 9095
+Handling connection for 29092
+Unable to listen on port 29092: Listeners failed to create with the following errors: [unable to create listener: Error listen tcp4 127.0.0.1:29092: bind: address already in use unable to create listener: Error listen tcp6 [::1]:29092: bind: address already in use]
+error: unable to listen on any of the requested ports: [{29092 9095}]
+Forwarding from 127.0.0.1:29093 -> 9095
+Forwarding from [::1]:29093 -> 9095
+Handling connection for 29093

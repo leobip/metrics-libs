@@ -1,5 +1,5 @@
-// homecalling-kafka.go
-package homecalling
+// metrics-kafka.go
+package libs
 
 import (
 	"context"
@@ -22,6 +22,7 @@ func StartKafkaMetrics() error {
 	if kafkaTopic == "" || kafkaBroker == "" {
 		return fmt.Errorf("missing KAFKA_TOPIC or KAFKA_BROKER environment variable")
 	}
+	fmt.Printf("🔧 Initializing Kafka writer with broker: %s and topic: %s\n", kafkaBroker, kafkaTopic)
 
 	kafkaWriter = &kafka.Writer{
 		Addr:     kafka.TCP(kafkaBroker),
@@ -33,8 +34,11 @@ func StartKafkaMetrics() error {
 		ticker := time.NewTicker(publishEvery)
 		defer ticker.Stop()
 		for {
+			fmt.Println("📤 Sending metrics to Kafka...")
 			if err := sendMetricsToKafka(); err != nil {
 				fmt.Fprintf(os.Stderr, "⚠️ error sending metrics to Kafka: %v\n", err)
+			} else {
+				fmt.Println("✅ Metrics sent successfully to Kafka")
 			}
 			<-ticker.C
 		}
@@ -44,12 +48,51 @@ func StartKafkaMetrics() error {
 }
 
 func sendMetricsToKafka() error {
-	msg := buildMetricsMessage()
+	// For testing, we can use hardcoded values or build a message dynamically
+	// Uncomment the next line to use hardcoded values for testing
+	msg := buildHardcodedMetricsMessage()
+	// Or use the dynamic metrics collection
+	// msg := buildMetricsMessage()
+	fmt.Printf("🛠 Built message: %+v\n", msg)
 	return sendToKafka(msg)
+}
+
+func buildHardcodedMetricsMessage() map[string]interface{} {
+	fields := map[string]interface{}{
+		"memory_usage_bytes":             123456789,
+		"cpu_usage_cores":                0.85,
+		"reconcile_count":                42,
+		"reconcile_errors":               3,
+		"last_successful_reconcile_time": float64(time.Now().Add(-1 * time.Minute).UnixMilli()),
+	}
+	tags := map[string]interface{}{
+		"namespace":          "metrics-ex",
+		"cluster":            "minikube",
+		"resource_kind":      "Pod",
+		"resource_name":      "example-pod",
+		"controller":         "simple-operator",
+		"controller_version": "v0.1.0",
+	}
+	message := map[string]interface{}{
+		"name":      "pod_status",
+		"timestamp": time.Now().UnixMilli(),
+		"tags":      tags,
+		"fields":    fields,
+	}
+	return message
 }
 
 func buildMetricsMessage() map[string]interface{} {
 	metrics := getMetrics()
+	mapValues := getMapValues()
+
+	fmt.Printf("📊 Collected %d tags\n", len(mapValues))
+	fmt.Printf("📊 Collected %d metrics\n", len(metrics))
+
+	tags := make(map[string]interface{})
+	for _, tag := range mapValues {
+		tags[tag.Name] = tag.Value
+	}
 
 	fields := make(map[string]interface{})
 	for _, m := range metrics {
@@ -59,15 +102,8 @@ func buildMetricsMessage() map[string]interface{} {
 	message := map[string]interface{}{
 		"name":      "pod_status",
 		"timestamp": time.Now().UnixMilli(),
-		"tags": map[string]interface{}{
-			"namespace":          os.Getenv("POD_NAMESPACE"),
-			"cluster":            os.Getenv("CLUSTER_NAME"),
-			"resource_kind":      os.Getenv("RESOURCE_KIND"),
-			"resource_name":      os.Getenv("RESOURCE_NAME"),
-			"controller":         os.Getenv("CONTROLLER_NAME"),
-			"controller_version": os.Getenv("CONTROLLER_VERSION"),
-		},
-		"fields": fields,
+		"tags":      tags,
+		"fields":    fields,
 	}
 
 	return message
@@ -79,57 +115,18 @@ func sendToKafka(msg map[string]interface{}) error {
 		return fmt.Errorf("failed to marshal Kafka message: %w", err)
 	}
 
+	fmt.Printf("📦 Final Kafka payload: %s\n", string(payload))
+
 	kafkaMsg := kafka.Message{
 		Key:   []byte("metrics"),
 		Value: payload,
 		Time:  time.Now(),
 	}
 
-	return kafkaWriter.WriteMessages(context.Background(), kafkaMsg)
-}
-
-/* func BuildMetricsMessage() map[string]interface{} {
-	timestamp := time.Now().UnixMilli()
-
-	tags := make(map[string]interface{})
-	fields := make(map[string]interface{})
-
-	// Reunimos métricas de pod
-	if podMetrics, err := getPodStatusMetrics(); err == nil {
-		tags["namespace"] = podMetrics.Namespace
-		tags["pod"] = podMetrics.PodName
-		tags["host_ip"] = podMetrics.HostIP
-		tags["image"] = podMetrics.Image
-		tags["phase"] = podMetrics.Phase
-		tags["container"] = podMetrics.ContainerName
-
-		fields["cpu_milli"] = podMetrics.CPUMilli
-		fields["mem_mib"] = podMetrics.MemoryMiB
-		fields["ready"] = podMetrics.Ready
-		fields["restart_count"] = podMetrics.RestartCount
-		fields["started"] = podMetrics.Started
-	} else {
-		fmt.Fprintf(os.Stderr, "⚠️ error getting pod metrics: %v\n", err)
-	}
-
-	return map[string]interface{}{
-		"name":      "pod_status",
-		"timestamp": timestamp,
-		"tags":      tags,
-		"fields":    fields,
-	}
-}
-
-func SendToKafka(message map[string]interface{}) error {
-	payload, err := json.Marshal(message)
+	fmt.Println("📡 Writing message to Kafka...")
+	err = kafkaWriter.WriteMessages(context.Background(), kafkaMsg)
 	if err != nil {
-		return fmt.Errorf("error marshaling message: %w", err)
+		return fmt.Errorf("❌ failed to write message to Kafka: %w", err)
 	}
-
-	kafkaMsg := kafka.Message{
-		Value: payload,
-	}
-
-	return kafkaProducer.WriteMessages(context.Background(), kafkaMsg)
+	return nil
 }
-*/

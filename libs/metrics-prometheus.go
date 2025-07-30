@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
 // metrics-prometheus.go
-package metricslibs
+package libs
 
 import (
 	"fmt"

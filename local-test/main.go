@@ -1,17 +1,24 @@
+// local-test/main.go
 package main
 
 import (
-	"log"
+	"fmt"
+	"os"
+	"time"
 
-	metricslibs "github.com/leobip/metrics-libs/libs" // Reemplaza con la ruta correcta a tu paquete de métricas
+	"github.com/leobip/metrics-libs/libs"
 )
 
 func main() {
-	err := metricslibs.StartPrometheusMetrics()
-	if err != nil {
-		log.Fatalf("could not start metrics server: %v", err)
+	fmt.Println("🔄 Starting Kafka metrics test...")
+
+	if err := libs.StartKafkaMetrics(); err != nil {
+		fmt.Fprintf(os.Stderr, "❌ Failed to start Kafka metrics: %v\n", err)
+		return
 	}
 
-	log.Println("📊 Prometheus metrics available at :2112/metrics")
-	select {} // bloquea indefinidamente
+	// Wait to let at least one message be sent
+	fmt.Println("⏳ Waiting 10 seconds to send message...")
+	time.Sleep(10 * time.Second)
+	fmt.Println("✅ Message should be visible in Kafka-UI topic: metrics")
 }

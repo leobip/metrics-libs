@@ -1,5 +1,5 @@
 // metrics-common.go
-package metricslibs
+package libs
 
 import (
 	"os"
@@ -15,6 +15,11 @@ var (
 	})
 )
 
+type Tag struct {
+	Name  string
+	Value any
+}
+
 type Metric struct {
 	Name  string
 	Value any
@@ -23,6 +28,17 @@ type Metric struct {
 		 	Labels map[string]string
 			Error  error
 	*/
+}
+
+func getMapValues() []Tag {
+	return []Tag{
+		{"namespace", os.Getenv("POD_NAMESPACE")},
+		{"cluster", os.Getenv("CLUSTER_NAME")},
+		{"resource_kind", os.Getenv("RESOURCE_KIND")},
+		{"resource_name", os.Getenv("RESOURCE_NAME")},
+		{"controller", os.Getenv("CONTROLLER_NAME")},
+		{"controller_version", os.Getenv("CONTROLLER_VERSION")},
+	}
 }
 
 func getMetrics() []Metric {
