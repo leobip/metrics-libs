@@ -15,8 +15,7 @@ import (
 
 // Common Labels for metrics
 var (
-	namespace = getNamespace()
-	cluster   = getClusterFromContext()
+	cluster = getClusterFromContext()
 
 	once sync.Once
 

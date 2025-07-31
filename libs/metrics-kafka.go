@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -50,9 +51,9 @@ func StartKafkaMetrics() error {
 func sendMetricsToKafka() error {
 	// For testing, we can use hardcoded values or build a message dynamically
 	// Uncomment the next line to use hardcoded values for testing
-	msg := buildHardcodedMetricsMessage()
+	// msg := buildHardcodedMetricsMessage()
 	// Or use the dynamic metrics collection
-	// msg := buildMetricsMessage()
+	msg := buildMetricsMessage()
 	fmt.Printf("🛠 Built message: %+v\n", msg)
 	return sendToKafka(msg)
 }
@@ -85,6 +86,19 @@ func buildHardcodedMetricsMessage() map[string]interface{} {
 func buildMetricsMessage() map[string]interface{} {
 	metrics := getMetrics()
 	mapValues := getMapValues()
+	namespace := getNamespace()
+
+	clientset, err := GetKubeClient()
+
+	var podCounts map[string]int
+	if err != nil {
+		log.Printf("⚠️ Could not get Kubernetes client: %v", err)
+	} else {
+		podCounts, err = GetPodCountsByController(clientset, namespace)
+		if err != nil {
+			log.Printf("⚠️ Could not get pod counts: %v", err)
+		}
+	}
 
 	fmt.Printf("📊 Collected %d tags\n", len(mapValues))
 	fmt.Printf("📊 Collected %d metrics\n", len(metrics))
@@ -97,6 +111,10 @@ func buildMetricsMessage() map[string]interface{} {
 	fields := make(map[string]interface{})
 	for _, m := range metrics {
 		fields[m.Name] = m.Value
+	}
+
+	if podCounts != nil {
+		fields["Pods-Count"] = podCounts
 	}
 
 	message := map[string]interface{}{
